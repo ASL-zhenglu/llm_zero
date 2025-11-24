@@ -1,0 +1,17 @@
+# 忽略数据集文件夹
+dataset/
+
+# 忽略 Python 缓存文件
+__pycache__/
+*.pyc
+
+
+results2048/
+saves/
+*.pt
+*.bin
+# 忽略 Jupyter Notebook 的检查点
+.ipynb_checkpoints/
+
+# 忽略 VS Code 配置
+.vscode/
