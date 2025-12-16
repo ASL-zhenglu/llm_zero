@@ -8,7 +8,9 @@ __pycache__/
 
 results2048/
 saves/
+out/
 *.pt
+*.pth
 *.bin
 sft/
 # 忽略 Jupyter Notebook 的检查点
