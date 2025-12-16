@@ -179,7 +179,7 @@ class Attention(nn.Module):
         v = v.transpose(1, 2) # b, self.num_heads, s, self.head_dim
         
         if self.flash_attn:
-        
+            
             # q*k转置，（b, self.num_heads, s, self.head_dim）* (b, self.num_heads, self.head_dim，s) = （b, self.num_heads, s, s）
             # q*k/sqrt(self.head_dim)*v  （b, self.num_heads, s, s）* (b, self.num_heads, s, self.head_dim) = b, self.num_heads, s, self.head_dim
             output = F.scaled_dot_product_attention(q, k, v, attn_mask=None, 
@@ -370,7 +370,7 @@ class LLM(PreTrainedModel):
         :return: 模型输出.
         """
        
-        hidden_states = self.token_embeddings(input_ids) 
+        hidden_states = self.token_embeddings(input_ids) # [B, T, hidden_size]
         hidden_states = self.dropout(hidden_states)  
         for idx, layer in enumerate(self.layers):
             hidden_states = layer(hidden_states, use_kv_cache=use_kv_cache)  
@@ -411,18 +411,27 @@ class LLM(PreTrainedModel):
             logits = inference_res.logits # 取最后一个token的logits(batch_size, seq_len, vocab_size)
             logits = logits[:, -1, :] # 降维度了
 
+            # input_ids.tolist()[0] 把当前已生成的整个序列（Tensor）转成 Python 列表
+            # set(...) 去重，只关心出现过哪些词，不关心出现次数
             for token in set(input_ids.tolist()[0]):  # 防止模型变成复读机
+                # logits[:, token] 选中这些“出现过的词”对应的预测分数
+                # /= repetition_penalty 将这些分数除以惩罚系数
                 logits[:, token] /= repetition_penalty
-
-            if temperature == 0.0:  
+            
+            if temperature == 0.0:  # 绝对理性
                 _, idx_next = torch.topk(logits, k=1, dim=-1)
             else:
+                # 当 T < 1 (低温)：比如 logits / 0.1。原本大的分数变得极大，小的变得极小。分布变得尖锐。模型更倾向于选高概率词，更保守。
+                # 当 T > 1 (高温)：比如 logits / 2.0。原本差异很大的分数，差距被缩小了。分布变得平坦。低概率的词也有机会被选中，模型更“疯狂”、更有创造力，但也更容易胡说八道。
                 logits = logits / temperature  
                 if top_k is not None:  
+                    # # 1. 找到第 k 大的分数作为阈值 v
                     v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
+                    # # 2. 把所有小于阈值的分数设为负无穷 (-Inf)
                     logits[logits < v[:, [-1]]] = -float('Inf') 
 
                 probs = F.softmax(logits, dim=-1)  
+                # 轮盘赌采样
                 idx_next = torch.multinomial(probs, num_samples=1, generator=None)  
 
             if idx_next == eos:  

@@ -41,7 +41,7 @@ if __name__ == '__main__':
     args = TrainingArguments(output_dir='./sft', 
                             num_train_epochs=5, 
                             do_train=True, 
-                            per_device_train_batch_size=16,
+                            per_device_train_batch_size=8,
                             gradient_accumulation_steps=8,
                             # max_steps=15000,
                             logging_steps=100,
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     # 实例化训练器
     trainer = Trainer(model=model, args=args, train_dataset=dataset, tokenizer=tokenizer, data_collator=data_collator)
     # 如果是初次训练resume_from_checkpoint为false，接着checkpoint继续训练，为True
-    trainer.train(resume_from_checkpoint=False)
+    trainer.train(resume_from_checkpoint=True)
     # 保存模型
     trainer.save_model('./saves/sft')
     # 保存训练状态

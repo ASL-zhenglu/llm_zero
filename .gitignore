@@ -10,6 +10,7 @@ results2048/
 saves/
 *.pt
 *.bin
+sft/
 # 忽略 Jupyter Notebook 的检查点
 .ipynb_checkpoints/
 

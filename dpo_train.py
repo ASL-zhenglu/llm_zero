@@ -54,8 +54,8 @@ def dpo_loss(ref_probs, probs, beta):
         return torch.cat(chosen_data), torch.cat(reject_data)
     
     ref_chosen_probs, ref_reject_probs = split_probs(ref_probs)
-    chosen_probs, reject_probs = split_probs(probs)
-    pi_logratios = chosen_probs - reject_probs
+    chosen_probs, reject_probs = split_probs(probs) # 输出对应的log概率
+    pi_logratios = chosen_probs - reject_probs 
     ref_logratios = ref_chosen_probs - ref_reject_probs
     logits = pi_logratios - ref_logratios
     loss = -F.logsigmoid(beta*logits)
@@ -75,8 +75,8 @@ class DPOTrainer(Trainer):
         :param num_items_in_batch: 批次中的项目数.
         :return: 损失.
         """
-        input_ids = inputs['input_ids']
-        labels = inputs['labels']
+        input_ids = inputs['input_ids'] # (batch_size * 2, seq_len)
+        labels = inputs['labels'] # (batch_size * 2, seq_len)
         with torch.no_grad():
             ref_logits = ref_model(input_ids=input_ids, labels = labels).logits
         ref_probs = logits_to_probs(ref_logits, labels)

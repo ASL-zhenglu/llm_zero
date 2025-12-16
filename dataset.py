@@ -143,8 +143,13 @@ class SFTDataset(Dataset):
         """
         super().__init__()
         self.data_path = data_path
-        self.tokenizer = tokenizer
-        self.max_seq_len = max_seq_len
+        self.tokenizer = tokenizer # 这里是分词器
+        self.max_seq_len = max_seq_len # 最大序列长度
+        # 这个长度不是只指回答，而是指整个输入序列，即：
+        # 历史对话（如果有）
+        # 用户问题（prompt）
+        # Assistant 回答（output）
+        # 特殊符号（如 <s>、<eos>、<|im_start|> 等）
         self.ignore_index = -100  # PyTorch Loss计算时忽略的标签ID
         
         # 加载数据
@@ -154,13 +159,13 @@ class SFTDataset(Dataset):
     def __len__(self):
         return len(self.data)
         
-    def __getitem__(self, index):
+    def __getitem__(self, index): # 获取单个样本
         sample = self.data[index]
         
         # 1. 获取对话列表
         # 兼容提供的两种格式：如果是text格式直接用，如果是conversations格式则解析
         if 'conversations' in sample:
-            messages = sample['conversations']
+            messages = sample['conversations']   
         elif 'text' in sample:
             # 如果已经是处理好的文本，这里可能需要根据你的逻辑调整
             # 这里假设text已经是格式化好的，但SFT通常需要区分角色做mask
